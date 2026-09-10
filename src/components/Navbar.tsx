@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ShieldCheck, Clock, Search, MessageSquare, Menu, X } from 'lucide-react';
 import { checkIsServiceOnline } from '../utils/format';
 import { SITE_CONFIG } from '../config/siteConfig';
@@ -80,19 +80,22 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenOrderDrawer, onOpenContact
           <div className="flex items-center gap-2.5">
             <button
               onClick={onOpenOrderDrawer}
-              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-medium text-neutral-700 hover:text-neutral-900 bg-white hover:bg-neutral-50 border border-[#E8E7E1] rounded-xl shadow-subtle transition-all active:scale-95"
+              className="inline-flex items-center justify-center gap-1.5 p-2 sm:px-3 sm:py-2 text-xs sm:text-sm font-medium text-neutral-700 hover:text-neutral-900 bg-white hover:bg-neutral-50 border border-[#E8E7E1] rounded-xl shadow-subtle transition-all active:scale-95"
               title="根据单号或联系方式查询历史订单"
+              aria-label="查询订单"
             >
               <Search className="w-4 h-4 text-neutral-500" />
-              <span>查询订单</span>
+              <span className="hidden sm:inline">查询订单</span>
             </button>
 
             <button
               onClick={onOpenContact}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs sm:text-sm font-semibold text-white bg-forest-900 hover:bg-forest-800 rounded-xl shadow-subtle hover:shadow-premium transition-all active:scale-95"
+              className="inline-flex items-center justify-center gap-1.5 p-2 sm:px-3.5 sm:py-2 text-xs sm:text-sm font-semibold text-white bg-forest-900 hover:bg-forest-800 rounded-xl shadow-subtle hover:shadow-premium transition-all active:scale-95"
+              title="联系在线客服 (微信/支付宝)"
+              aria-label="联系客服"
             >
               <MessageSquare className="w-4 h-4 text-emerald-300" />
-              <span>联系客服</span>
+              <span className="hidden sm:inline">联系客服</span>
             </button>
 
             <button
