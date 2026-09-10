@@ -9,6 +9,7 @@ const DATA_DIR = path.join(__dirname, '../data');
 const ORDERS_FILE = path.join(DATA_DIR, 'orders.json');
 const COSTS_FILE = path.join(DATA_DIR, 'costs.json');
 const SETTINGS_FILE = path.join(DATA_DIR, 'settings.json');
+const USERS_FILE = path.join(DATA_DIR, 'users.json');
 const PORT = process.env.PORT || 3001;
 
 // 确保数据目录与基础文件存在
@@ -17,6 +18,9 @@ if (!fs.existsSync(DATA_DIR)) {
 }
 if (!fs.existsSync(ORDERS_FILE)) {
   fs.writeFileSync(ORDERS_FILE, JSON.stringify([], null, 2), 'utf-8');
+}
+if (!fs.existsSync(USERS_FILE)) {
+  fs.writeFileSync(USERS_FILE, JSON.stringify([], null, 2), 'utf-8');
 }
 
 // 默认 12 位高强度管理员密钥
@@ -95,6 +99,26 @@ function writeSettings(settings) {
     fs.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2), 'utf-8');
   } catch (err) {
     console.error('Error writing settings file:', err);
+  }
+}
+
+function readUsers() {
+  try {
+    if (fs.existsSync(USERS_FILE)) {
+      const raw = fs.readFileSync(USERS_FILE, 'utf-8');
+      return JSON.parse(raw);
+    }
+  } catch (err) {
+    console.error('Error reading users file:', err);
+  }
+  return [];
+}
+
+function writeUsers(users) {
+  try {
+    fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2), 'utf-8');
+  } catch (err) {
+    console.error('Error writing users file:', err);
   }
 }
 
@@ -339,6 +363,74 @@ const server = http.createServer(async (req, res) => {
     settings.adminPassword = newPassword;
     writeSettings(settings);
     return sendJSON(200, { success: true, message: '口令修改成功' });
+  }
+
+  // 13. POST /api/users/register (用户注册)
+  if (pathname === '/api/users/register' && req.method === 'POST') {
+    const { account, password, nickname, accountType } = await getBody();
+    if (!account || !password) {
+      return sendJSON(400, { success: false, message: '账号与密码不能为空' });
+    }
+    const cleanAccount = account.trim();
+    const users = readUsers();
+    const exists = users.find(u => u.account.toLowerCase() === cleanAccount.toLowerCase());
+    if (exists) {
+      return sendJSON(409, { success: false, message: '该账号已存在，请直接登录' });
+    }
+
+    const newUser = {
+      id: 'USR-' + Math.random().toString(36).substring(2, 8).toUpperCase(),
+      account: cleanAccount,
+      accountType: accountType || (cleanAccount.includes('@') ? 'email' : 'phone'),
+      nickname: nickname || (cleanAccount.includes('@') ? cleanAccount.split('@')[0] : cleanAccount.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2')),
+      password: password, // 服务端持久化
+      createdAt: new Date().toISOString()
+    };
+
+    users.push(newUser);
+    writeUsers(users);
+
+    const { password: _, ...safeUser } = newUser;
+    return sendJSON(201, { success: true, message: '注册成功', user: safeUser });
+  }
+
+  // 14. POST /api/users/login (用户登录)
+  if (pathname === '/api/users/login' && req.method === 'POST') {
+    const { account, password } = await getBody();
+    if (!account || !password) {
+      return sendJSON(400, { success: false, message: '账号与密码不能为空' });
+    }
+    const cleanAccount = account.trim();
+    const users = readUsers();
+    const found = users.find(u => u.account.toLowerCase() === cleanAccount.toLowerCase());
+    if (!found) {
+      return sendJSON(404, { success: false, message: '该账号尚未注册，请先注册' });
+    }
+    if (found.password !== password) {
+      return sendJSON(401, { success: false, message: '密码不正确，请重新输入' });
+    }
+
+    const { password: _, ...safeUser } = found;
+    return sendJSON(200, { success: true, message: '登录成功', user: safeUser });
+  }
+
+  // 15. POST /api/users/preferences (更新用户直充常用配置)
+  if (pathname === '/api/users/preferences' && req.method === 'POST') {
+    const { userId, savedContact, savedRemoteTool, savedOsType } = await getBody();
+    if (!userId) {
+      return sendJSON(400, { success: false, message: 'userId is required' });
+    }
+    const users = readUsers();
+    const user = users.find(u => u.id === userId);
+    if (user) {
+      if (savedContact !== undefined) user.savedContact = savedContact;
+      if (savedRemoteTool !== undefined) user.savedRemoteTool = savedRemoteTool;
+      if (savedOsType !== undefined) user.savedOsType = savedOsType;
+      writeUsers(users);
+      const { password: _, ...safeUser } = user;
+      return sendJSON(200, { success: true, user: safeUser });
+    }
+    return sendJSON(404, { success: false, message: 'User not found' });
   }
 
   // 默认 404

@@ -1,14 +1,17 @@
-import React, { useState } from 'react';
-import type { Plan, Order } from '../types';
+import React, { useState, useEffect } from 'react';
+import type { Plan, Order, UserProfile } from '../types';
 import { SITE_CONFIG } from '../config/siteConfig';
 import { generateOrderShareText } from '../utils/format';
 import { generateSmartOrderId } from '../utils/orderCodec';
 import { saveOrderToLocal } from '../utils/storage';
+import { updateUserPreferences } from '../utils/authStorage';
 import confetti from 'canvas-confetti';
 import { X, ShieldCheck, Check, ArrowRight, ArrowLeft, Copy, CheckCircle2, AlertCircle, ZoomIn } from 'lucide-react';
 
 interface CheckoutModalProps {
   plan: Plan | null;
+  currentUser?: UserProfile | null;
+  onOpenAuth?: () => void;
   onClose: () => void;
   onCopyText: (text: string, label: string) => void;
   onOrderSuccess: (order: Order) => void;
@@ -16,6 +19,8 @@ interface CheckoutModalProps {
 
 export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   plan,
+  currentUser,
+  onOpenAuth,
   onClose,
   onCopyText,
   onOrderSuccess
@@ -25,15 +30,30 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const [step, setStep] = useState<1 | 2 | 3>(1);
 
   const [contactType, setContactType] = useState<'wechat' | 'phone' | 'email'>('wechat');
-  const [contactValue, setContactValue] = useState('');
-  const [remoteTool, setRemoteTool] = useState<'sunlogin' | 'todesk'>('sunlogin');
-  const [osType, setOsType] = useState<'windows' | 'macos'>('windows');
+  const [contactValue, setContactValue] = useState(currentUser?.savedContact || '');
+  const [remoteTool, setRemoteTool] = useState<'sunlogin' | 'todesk'>(currentUser?.savedRemoteTool || 'sunlogin');
+  const [osType, setOsType] = useState<'windows' | 'macos'>(currentUser?.savedOsType || 'windows');
   const [note, setNote] = useState('');
   const [errorTip, setErrorTip] = useState('');
 
   const [paymentMethod, setPaymentMethod] = useState<'wechat' | 'alipay'>('wechat');
   const [createdOrder, setCreatedOrder] = useState<Order | null>(null);
   const [showQrPreview, setShowQrPreview] = useState(false);
+
+  // 自动带入用户常用偏好
+  useEffect(() => {
+    if (currentUser) {
+      if (currentUser.savedContact && !contactValue) {
+        setContactValue(currentUser.savedContact);
+      }
+      if (currentUser.savedRemoteTool) {
+        setRemoteTool(currentUser.savedRemoteTool);
+      }
+      if (currentUser.savedOsType) {
+        setOsType(currentUser.savedOsType);
+      }
+    }
+  }, [currentUser]);
 
   const handleProceedToPayment = () => {
     if (!contactValue.trim()) {
@@ -60,10 +80,22 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
       note: note.trim(),
       paymentMethod,
       status: 'pending',
-      createdAt: new Date().toLocaleString('zh-CN', { hour12: false })
+      createdAt: new Date().toLocaleString('zh-CN', { hour12: false }),
+      userId: currentUser?.id,
+      userAccount: currentUser?.account,
     };
 
     saveOrderToLocal(newOrder);
+
+    // 记忆保存该用户的联系与设备偏好
+    if (currentUser) {
+      updateUserPreferences({
+        savedContact: contactValue.trim(),
+        savedRemoteTool: remoteTool,
+        savedOsType: osType
+      });
+    }
+
     setCreatedOrder(newOrder);
     setStep(3);
     onOrderSuccess(newOrder);
@@ -168,6 +200,31 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
           {/* STEP 1: 填写联系方式与远程要求 */}
           {step === 1 && (
             <div className="space-y-4">
+              {currentUser ? (
+                <div className="p-3 rounded-xl bg-emerald-50/80 border border-emerald-200/60 flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2 text-emerald-800">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                    <span>已绑定会员账号：<strong>{currentUser.account}</strong></span>
+                  </div>
+                  <span className="text-[10px] text-emerald-700 font-mono bg-white px-2 py-0.5 rounded border border-emerald-200">
+                    订单自动归集
+                  </span>
+                </div>
+              ) : (
+                <div className="p-3 rounded-xl bg-neutral-50 border border-neutral-200/80 flex items-center justify-between text-xs text-neutral-600">
+                  <span className="text-neutral-500">登录专属账号后下单，可自动归集订单并免填设备</span>
+                  {onOpenAuth && (
+                    <button
+                      type="button"
+                      onClick={onOpenAuth}
+                      className="text-xs font-semibold text-neutral-900 underline hover:text-emerald-700 ml-2"
+                    >
+                      去登录
+                    </button>
+                  )}
+                </div>
+              )}
+
               <div>
                 <label className="block text-xs font-bold text-neutral-800 mb-1.5">
                   联系方式 <span className="text-rose-500">* (必填，客服依此对接)</span>

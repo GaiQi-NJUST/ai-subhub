@@ -1,4 +1,4 @@
-﻿export type BrandType = 'openai' | 'claude';
+export type BrandType = 'openai' | 'claude';
 
 export interface Plan {
   id: string;
@@ -30,6 +30,19 @@ export interface Order {
   paymentMethod: 'wechat' | 'alipay';
   status: OrderStatus;
   createdAt: string;
+  userId?: string;          // 绑定的登录用户 ID
+  userAccount?: string;     // 绑定的登录用户账号 (手机/邮箱)
+}
+
+export interface UserProfile {
+  id: string;
+  account: string;          // 手机号或邮箱
+  accountType: 'phone' | 'email';
+  nickname?: string;        // 用户自定义昵称
+  createdAt: string;        // 注册时间
+  savedContact?: string;    // 上次使用的联系方式 (微信号)
+  savedRemoteTool?: 'sunlogin' | 'todesk'; // 上次使用的远程协助软件
+  savedOsType?: 'windows' | 'macos';       // 上次使用的操作系统
 }
 
 export interface FaqItem {

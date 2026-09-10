@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { Plan } from './types';
+import type { Plan, UserProfile } from './types';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { PricingSection } from './components/PricingSection';
@@ -13,8 +13,14 @@ import { ContactModal } from './components/ContactModal';
 import { ContactFloat } from './components/ContactFloat';
 import { Toast } from './components/Toast';
 import { AdminModal } from './components/AdminModal';
+import { AuthModal } from './components/AuthModal';
+import { getCurrentUser, logoutUser, formatUserDisplayName } from './utils/authStorage';
 
 export function App() {
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(() => getCurrentUser());
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('login');
+
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [orderDrawerOpen, setOrderDrawerOpen] = useState(false);
   const [contactModalOpen, setContactModalOpen] = useState(false);
@@ -31,6 +37,22 @@ export function App() {
     setTimeout(() => {
       setToastInfo(prev => ({ ...prev, visible: false }));
     }, 2800);
+  };
+
+  const handleOpenAuth = (mode: 'login' | 'register' = 'login') => {
+    setAuthModalMode(mode);
+    setAuthModalOpen(true);
+  };
+
+  const handleLoginSuccess = (user: UserProfile) => {
+    setCurrentUser(user);
+    showToast(`欢迎，${formatUserDisplayName(user)}！已为您连接专属直充凭证库`, 'success');
+  };
+
+  const handleLogout = () => {
+    logoutUser();
+    setCurrentUser(null);
+    showToast('已安全退出当前账号', 'info');
   };
 
   const handleCopyText = async (text: string, label: string) => {
@@ -76,6 +98,9 @@ export function App() {
 
       {/* 顶部导航 */}
       <Navbar
+        currentUser={currentUser}
+        onOpenAuth={handleOpenAuth}
+        onLogout={handleLogout}
         onOpenOrderDrawer={() => setOrderDrawerOpen(true)}
         onOpenContact={() => setContactModalOpen(true)}
       />
@@ -103,9 +128,19 @@ export function App() {
       {/* 页脚 (含店主后台入口) */}
       <Footer onOpenAdmin={() => setAdminModalOpen(true)} />
 
+      {/* 用户登录 / 注册通行证弹窗 */}
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        onLoginSuccess={handleLoginSuccess}
+        initialMode={authModalMode}
+      />
+
       {/* 选购收银预约弹窗 */}
       <CheckoutModal
         plan={selectedPlan}
+        currentUser={currentUser}
+        onOpenAuth={() => handleOpenAuth('login')}
         onClose={() => setSelectedPlan(null)}
         onCopyText={handleCopyText}
         onOrderSuccess={(order) => {
@@ -116,6 +151,8 @@ export function App() {
       {/* 本地订单查询抽屉 */}
       <OrderDrawer
         isOpen={orderDrawerOpen}
+        currentUser={currentUser}
+        onOpenAuth={() => handleOpenAuth('login')}
         onClose={() => setOrderDrawerOpen(false)}
         onCopyText={handleCopyText}
       />

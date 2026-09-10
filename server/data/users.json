@@ -1,0 +1,18 @@
+[
+  {
+    "id": "USR-RO3UTE",
+    "account": "13800138000",
+    "accountType": "phone",
+    "nickname": "????",
+    "password": "password123",
+    "createdAt": "2026-09-10T15:22:39.499Z"
+  },
+  {
+    "id": "USR-MGV8E1",
+    "account": "qigai730@gmail.com",
+    "accountType": "email",
+    "nickname": "ALES",
+    "password": "060921",
+    "createdAt": "2026-09-10T15:25:26.101Z"
+  }
+]
