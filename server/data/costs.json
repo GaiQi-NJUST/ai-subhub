@@ -1,0 +1,50 @@
+[
+  {
+    "planId": "gpt-plus",
+    "planName": "GPT Plus",
+    "brand": "openai",
+    "sellingPrice": 130,
+    "costPrice": 110,
+    "enabled": true
+  },
+  {
+    "planId": "gpt-pro-5x",
+    "planName": "GPT Pro 5x",
+    "brand": "openai",
+    "sellingPrice": 669,
+    "costPrice": 625,
+    "enabled": true
+  },
+  {
+    "planId": "gpt-pro-20x",
+    "planName": "GPT Pro 20x",
+    "brand": "openai",
+    "sellingPrice": 1099,
+    "costPrice": 980,
+    "enabled": true
+  },
+  {
+    "planId": "claude-pro",
+    "planName": "Claude Pro",
+    "brand": "claude",
+    "sellingPrice": 160,
+    "costPrice": 135,
+    "enabled": true
+  },
+  {
+    "planId": "claude-max-5x",
+    "planName": "Claude Max 5x",
+    "brand": "claude",
+    "sellingPrice": 710,
+    "costPrice": 670,
+    "enabled": true
+  },
+  {
+    "planId": "claude-max-20x",
+    "planName": "Claude Max 20x",
+    "brand": "claude",
+    "sellingPrice": 1500,
+    "costPrice": 1050,
+    "enabled": true
+  }
+]
