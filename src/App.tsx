@@ -14,6 +14,7 @@ import { ContactFloat } from './components/ContactFloat';
 import { Toast } from './components/Toast';
 import { AdminModal } from './components/AdminModal';
 import { AuthModal } from './components/AuthModal';
+import { MouseMeteorTrail } from './components/MouseMeteorTrail';
 import { getCurrentUser, logoutUser, formatUserDisplayName } from './utils/authStorage';
 
 export function App() {
@@ -88,6 +89,7 @@ export function App() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F8F8F5] text-[#18181B] relative font-sans selection:bg-emerald-500/20 selection:text-neutral-900">
+      <MouseMeteorTrail />
       
       {/* 全局 Toast */}
       <Toast
